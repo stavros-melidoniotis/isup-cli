@@ -1,0 +1,21 @@
+{
+  "name": "isup",
+  "version": "1.0.0",
+  "description": "CLI tool that checks whether website(s) are up or down.",
+  "main": "index.js",
+  "bin": {
+    "isup": "index.js"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Stavros Melidoniotis",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^0.22.0",
+    "chalk": "^4.1.2",
+    "commander": "^8.2.0",
+    "fs": "^0.0.1-security",
+    "inquirer": "^8.2.0"
+  }
+}
