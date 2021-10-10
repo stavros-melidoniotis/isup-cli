@@ -1,29 +1,59 @@
-const fs = require('fs')
 const axios = require('axios')
+const https = require('https')
 
-const { logGeneric, logError, logResult } = require('../helpers/loggers')
+const axiosInstance = axios.create({
+    httpsAgent: new https.Agent({  
+        rejectUnauthorized: false
+    })
+});
 
-function check({timeout, file}) {
-    try {
-        var rawData = fs.readFileSync(file)
-    } catch (err) {
-        logError(`ERROR: ${err.code} - ${err.path}`)
-        return;
+const { logMessage, logError, logResult } = require('../helpers/loggers')
+const { readFile, parseJSON, isJSONFile, isEmpty } = require('../helpers/files')
+
+function check({timeout, file, filter}) {
+
+    if (!isJSONFile(file)) {
+        logError(`File "${file}" isn't a JSON file!`)
+        return
     }
 
-    let websites = JSON.parse(rawData)
+    let rawData = readFile(file)
+    let websites = parseJSON(file, rawData)
 
-    if (!websites) {
-        logError('ERROR: Incorrect JSON structure')
-        return;
+    if (isEmpty(websites)) {
+        logError(`File "${file}" contains no websites to check!`)
+        return
     }
 
-    logGeneric(`----- Starting isup command. (File: ${file}, Timeout: ${timeout}ms) -----\n`)
+    if (filter) {
+        let filteredWebsites = [];
+        let keywords = filter.split(" ");
+
+        // Splitting keywords based on space (" ") may result to some empty values 
+        // e.g. if the user adds many spaces between the keywords
+        keywords = removeEmptiesFromArray(keywords)
+
+        websites.forEach(website => {
+            let websiteKeywords = website.keywords;
+
+            if (haveCommonKeywords(websiteKeywords, keywords))
+                filteredWebsites.push(website)
+        })
+
+        if (isEmpty(filteredWebsites)) {
+            logError(`Didn't find any websites with keywords [${keywords}]`)
+            return
+        }
+
+        websites = Array.from(filteredWebsites)
+    }
+
+    logMessage(`----- Starting isup command. (File: ${file}, Timeout: ${timeout}ms) -----\n`)
 
     websites.forEach(website => {
         if (!website.url || !website.nicename) return
 
-        let keywords = (website.keywords) ? website.keywords : []
+        let keywords = website.keywords || []
         let editedKeywords = keywords.map(keyword => `[${keyword}]`)
 
         editedKeywords = editedKeywords.join('');
@@ -39,14 +69,12 @@ function check({timeout, file}) {
 
         (async () => {
             try {
-                let response = await axios.get(website.url, { timeout: timeout });
+                let response = await axiosInstance.get(website.url, { timeout: timeout });
 
                 to_log.status = 'OK'
                 to_log.response = response
                 logResult(to_log);
             } catch (err) {
-                // console.log(err)
-
                 switch (err.code) {
                     case 'ECONNABORTED':
                         to_log.status = 'TIMEOUT'
@@ -68,6 +96,14 @@ function check({timeout, file}) {
             }
         })();
     })
+}
+
+function removeEmptiesFromArray(array) {
+    return array.filter(value => value !== "")
+}
+
+function haveCommonKeywords(websiteKeywords, filterKeywords) {
+    return websiteKeywords.some(keyword => filterKeywords.includes(keyword))
 }
 
 module.exports = check

@@ -4,26 +4,25 @@ const OK_ICON = '✅'
 const DOWN_ICON = '❌'
 const TIMEOUT_ICON = '⌛'
 const WARNING_ICON = '⚠️'
-const ARROW = '➡️'
 
-exports.logGeneric = function (message) {
+exports.logMessage = function (message) {
     return console.log(chalk.magenta.bold(message))
 }
 
 exports.logError = function (message) {
-    return console.log(chalk.red.bold(`${message} ${DOWN_ICON}`))
+    return console.log(chalk.red.bold(`isup-error: ${message} ${DOWN_ICON}`))
 }
 
 exports.logSuccess = function (message) {
-    return console.log(chalk.green.bold(`${message} ${OK_ICON}`))
+    return console.log(chalk.green.bold(`isup-success: ${message} ${OK_ICON}`))
 }
 
 exports.logWarning = function (message) {
-    return console.log(chalk.yellow.bold(`${message} ${WARNING_ICON}`))
+    return console.log(chalk.yellow.bold(`isup-warn: ${message} ${WARNING_ICON}`))
 }
 
 exports.logResult = function (result) {
-    let baseConsoleLog = `${chalk.magenta(result.keywords)} ${chalk.cyan.bold(result.name)} ${chalk.cyan.dim("("+result.url+")")} ${ARROW}`;
+    let baseConsoleLog = `${chalk.magenta(result.keywords)} ${chalk.cyan.bold(result.name)} ${chalk.cyan.dim("("+result.url+")")} ==> `;
 
     switch (result.status) {
         case 'OK':

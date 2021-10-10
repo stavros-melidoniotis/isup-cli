@@ -1,23 +1,23 @@
-const fs = require('fs')
-
-const { logGeneric, logError, logSuccess, logWarning } = require('../helpers/loggers')
+// helpers
+const { logMessage, logError, logSuccess, logWarning } = require('../helpers/loggers')
+const { readFile, parseJSON, isJSONFile, isEmpty } = require('../helpers/files')
 
 function find({file, url}) {
-    try {
-        var rawData = fs.readFileSync(file)
-    } catch (err) {
-        logError(`${err.code} - ${err.path}`)
-        return;
+
+    if (!isJSONFile(file)) {
+        logError(`File "${file}" isn't a JSON file!`)
+        return
     }
 
-    let websites = JSON.parse(rawData)
+    let rawData = readFile(file)
+    let websites = parseJSON(file, rawData)
 
-    if (!websites) {
-        logError('Incorrect JSON structure')
-        return;
+    if (isEmpty(websites)) {
+        logError(`File "${file}" contains no websites to check!`)
+        return
     }
 
-    logGeneric(`---- Searching ${file} for url: ${url} ----\n`)
+    logMessage(`---- Searching ${file} for url: ${url} ----\n`)
 
     let found = websites.find(website => website.url == url);
 

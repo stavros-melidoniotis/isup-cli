@@ -1,22 +1,20 @@
-const fs = require('fs')
 const inquirer = require('inquirer')
 
-const { logGeneric, logError, logSuccess, logWarning } = require('../helpers/loggers')
-const { checkIfEmpty, isCommaSeparated } = require('../helpers/prompt-validators')
+// helper functions
+const { logMessage, logError, logSuccess, logWarning } = require('../helpers/loggers')
+const { readFile, parseJSON, isJSONFile, isEmpty, writeToFile } = require('../helpers/files')
+const { checkIfEmpty, checkIfEmptyAndValidUrl, isCommaSeparated } = require('../helpers/prompt-validators')
 
 const FOR_URL = 0
 const FOR_NAME = 1
 const FOR_KEYWORDS = 2
 
-
-// TODO: Add extra validations
 const questions = [
     {
         type: "input",
         name: "url",
         message: "Website url (e.g. https://google.com):",
-        validate: checkIfEmpty
-        // TODO: url simple validation
+        validate: checkIfEmptyAndValidUrl
     },
     {
         type: "input",
@@ -33,25 +31,25 @@ const questions = [
 ];
 
 function add({file}) {
-    try {
-        var rawData = fs.readFileSync(file)
-    } catch (err) {
-        logError(`${err.code} - ${err.path}`)
-        return;
+
+    if (!isJSONFile(file)) {
+        logError(`File "${file}" isn't a JSON file!`)
+        return
     }
 
-    let websites = JSON.parse(rawData)
+    let rawData = readFile(file)
+    let websites = parseJSON(file, rawData)
 
-    if (!websites) {
-        logError('Incorrect JSON structure')
-        return;
+    if (isEmpty(websites)) {
+        logError(`File "${file}" contains no websites to check!`)
+        return
     }
 
-    logGeneric('Please provide the following information: (Ctrl/⌘ + C at anytime to cancel)\n');
+    logMessage('Please provide the following information: (Ctrl/CMD + C at anytime to cancel)\n');
 
     (async () => {
         const answerForURL = await inquirer.prompt([questions[FOR_URL]]);
-        const url = answerForURL.url
+        const {url} = answerForURL
 
         if (websiteAlreadyExists(websites, url)) {
             logWarning(`Item ${url} already in list! Skipping...`)
@@ -59,10 +57,10 @@ function add({file}) {
         }
 
         const answerForName = await inquirer.prompt([questions[FOR_NAME]]);
-        const name = answerForName.name
+        const {name} = answerForName
 
         const answerForKeywords = await inquirer.prompt([questions[FOR_KEYWORDS]]);
-        let keywords = answerForKeywords.keywords
+        let {keywords} = answerForKeywords
 
         keywords = keywords
                     .trim() // remove whitespace from start and end
@@ -70,26 +68,15 @@ function add({file}) {
                     .split(',') // split by comma
 
 
-        // TODO: Handle empty keywords better
         websites.push({
             "nicename": name, 
             "url": url, 
-            "keywords": (keywords) ? keywords : []
+            "keywords": keywords.filter(value => value !== "")
         })
 
         await writeToFile(file, websites);
-        logSuccess(`Website ${name} added to ${file}!`)
+        logSuccess(`Website "${name}" added to "${file}"!`)
     })()
-}
-
-async function writeToFile(file, content) {
-    await fs.writeFile(file, JSON.stringify(content), err => {
-        if (err) {
-            console.error(err)
-            return
-        }
-        
-    })
 }
 
 function websiteAlreadyExists(websites, url) {
