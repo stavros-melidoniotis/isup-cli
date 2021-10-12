@@ -67,7 +67,6 @@ function add({file}) {
                     .replace(/ /g, '') // remove all spaces
                     .split(',') // split by comma
 
-
         websites.push({
             "nicename": name, 
             "url": url, 

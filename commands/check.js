@@ -25,9 +25,11 @@ function check({timeout, file, filter}) {
         return
     }
 
+    logMessage(`----- Starting isup command. (File: ${file}, Timeout: ${timeout} ms) -----\n`)
+
     if (filter) {
-        let filteredWebsites = [];
-        let keywords = filter.split(" ");
+        let atLeastOne = false
+        let keywords = filter.split(" ")
 
         // Splitting keywords based on space (" ") may result to some empty values 
         // e.g. if the user adds many spaces between the keywords
@@ -36,66 +38,21 @@ function check({timeout, file, filter}) {
         websites.forEach(website => {
             let websiteKeywords = website.keywords;
 
-            if (haveCommonKeywords(websiteKeywords, keywords))
-                filteredWebsites.push(website)
+            if (haveCommonKeywords(websiteKeywords, keywords)) {
+                checkStatus(website, timeout)
+                atLeastOne = true
+            }
         })
 
-        if (isEmpty(filteredWebsites)) {
+        if (!atLeastOne) {
             logError(`Didn't find any websites with keywords [${keywords}]`)
             return
         }
-
-        websites = Array.from(filteredWebsites)
+    } else {
+        websites.forEach(website => {
+            checkStatus(website, timeout)
+        })
     }
-
-    logMessage(`----- Starting isup command. (File: ${file}, Timeout: ${timeout}ms) -----\n`)
-
-    websites.forEach(website => {
-        if (!website.url || !website.nicename) return
-
-        let keywords = website.keywords || []
-        let editedKeywords = keywords.map(keyword => `[${keyword}]`)
-
-        editedKeywords = editedKeywords.join('');
-
-        // JSON containing all required info for the logging process
-        let to_log = {
-            "status": "",
-            "name": website.nicename,
-            "url": website.url,
-            "keywords": editedKeywords,
-            "response": ""
-        };
-
-        (async () => {
-            try {
-                let response = await axiosInstance.get(website.url, { timeout: timeout });
-
-                to_log.status = 'OK'
-                to_log.response = response
-                logResult(to_log);
-            } catch (err) {
-                switch (err.code) {
-                    case 'ECONNABORTED':
-                        to_log.status = 'TIMEOUT'
-                        logResult(to_log)
-                        break
-                    case 'ENOTFOUND':
-                        to_log.status = 'NOT_FOUND'
-                        logResult(to_log)
-                        break
-                    case 'ECONNREFUSED':
-                        to_log.status = 'CONN_REFUSED'
-                        logResult(to_log)
-                        break
-                    default:
-                        to_log.status = 'DOWN'
-                        to_log.response = err
-                        logResult(to_log)
-                }
-            }
-        })();
-    })
 }
 
 function removeEmptiesFromArray(array) {
@@ -104,6 +61,53 @@ function removeEmptiesFromArray(array) {
 
 function haveCommonKeywords(websiteKeywords, filterKeywords) {
     return websiteKeywords.some(keyword => filterKeywords.includes(keyword))
+}
+
+function checkStatus(website, timeout) {
+    if (!website.url || !website.nicename) return
+
+    let keywords = website.keywords || []
+    let editedKeywords = keywords.map(keyword => `[${keyword}]`)
+
+    editedKeywords = editedKeywords.join('');
+
+    // JSON containing all required info for the logging process
+    let to_log = {
+        "status": "",
+        "name": website.nicename,
+        "url": website.url,
+        "keywords": editedKeywords,
+        "response": ""
+    };
+
+    (async () => {
+        try {
+            let response = await axiosInstance.get(website.url, { timeout: timeout })
+
+            to_log.status = 'OK'
+            to_log.response = response
+            logResult(to_log);
+        } catch (err) {
+            switch (err.code) {
+                case 'ECONNABORTED':
+                    to_log.status = 'TIMEOUT'
+                    logResult(to_log)
+                    break
+                case 'ENOTFOUND':
+                    to_log.status = 'NOT_FOUND'
+                    logResult(to_log)
+                    break
+                case 'ECONNREFUSED':
+                    to_log.status = 'CONN_REFUSED'
+                    logResult(to_log)
+                    break
+                default:
+                    to_log.status = 'DOWN'
+                    to_log.response = err
+                    logResult(to_log)
+            }
+        }
+    })()
 }
 
 module.exports = check
