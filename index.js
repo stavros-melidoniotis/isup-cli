@@ -8,6 +8,7 @@ const find = require('./commands/find')
 const add = require('./commands/add')
 const makeJson = require('./commands/make-json')
 const rmDuplicates = require('./commands/rm-duplicates')
+const rmKeywords = require('./commands/rm-keywords')
 
 // isup check
 program
@@ -47,5 +48,12 @@ program
     .requiredOption('--file <filepath>', 'The JSON file to search for duplicates.')
     .action(rmDuplicates)
 
+// isup rm-keywords
+program
+    .command('rm-keywords')
+    .description('Removes all websites with specified keywords from the JSON file.')
+    .requiredOption('--file <filepath>', 'The JSON file containing the websites.')
+    .requiredOption('-k, --keywords <keywords>', 'The keywords to remove.')
+    .action(rmKeywords)
 
 program.parse()
