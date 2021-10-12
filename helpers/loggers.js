@@ -30,7 +30,7 @@ exports.logResult = function (result) {
             break
         case 'DOWN':
             let res = result.response.request.res
-            console.log(baseConsoleLog, chalk.red.bold(`DOWN (${res.statusCode} ${res.statusMessage}) ${DOWN_ICON}`))
+            console.log(baseConsoleLog, chalk.red.bold(`DOWN (${res?.statusCode || 'no'} ${res?.statusMessage || 'internet'}) ${DOWN_ICON}`))
             break
         case 'TIMEOUT':
             console.log(baseConsoleLog, chalk.yellow.bold(`TIMEOUT ${TIMEOUT_ICON}`))
