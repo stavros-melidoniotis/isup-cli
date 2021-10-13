@@ -2,8 +2,8 @@
 A cli tool to quickly test whether websites are up and running. Works with `Windows`, `Mac` and `Linux`.
 
 # Installation
-Download the project locally and from inside the project's directory run:
-`npm install -g`
+Download the project locally and run `npm install -g` from inside the project's directory. 
+You need to have Node.js installed (Download [here](https://nodejs.org/en/download/)).
 
 # Usage
 ```
@@ -97,3 +97,9 @@ $ isup rm-keywords --file path/to/file -k <keywords>
 ```
 
 ![](https://i.imgur.com/KUVnVme.png)
+
+# Under the hood
+- [Commander.js](https://www.npmjs.com/package/commander) - The complete solution for node.js command-line interfaces.
+- [chalk](https://www.npmjs.com/package/chalk) - Terminal string styling done right
+- [axios](https://www.npmjs.com/package/axios) - Promise based HTTP client for the browser and node.js
+- [Inquirer.js](https://www.npmjs.com/package/inquirer) - A collection of common interactive command line user interfaces.
